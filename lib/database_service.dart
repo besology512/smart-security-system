@@ -17,6 +17,7 @@ class DatabaseService {
           'Activation': data['Activation']?.toString() ?? 'OFF',
           'HomeStatus': data['HomeStatus']?.toString() ?? 'Home is Safe',
           'Password': data['Password']?.toString() ?? '1234',
+          'Door': data['Door']?.toString() ?? 'OPEN',
         };
       }
       return {};
@@ -38,6 +39,25 @@ class DatabaseService {
       return response.statusCode == 200;
     } catch (e) {
       print('Update error: $e');
+      return false;
+    }
+  }
+
+  // New method to toggle door state
+  Future<bool> toggleDoor() async {
+    try {
+      final currentValues = await getValues();
+      String newDoorState = currentValues['Door'] == 'OPEN' ? 'CLOSED' : 'OPEN';
+      final response = await http.put(
+        Uri.parse('$databaseUrl/Door.json'),
+        body: json.encode(newDoorState),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      print('Toggle Door to $newDoorState - Status: ${response.statusCode}');
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Toggle Door error: $e');
       return false;
     }
   }

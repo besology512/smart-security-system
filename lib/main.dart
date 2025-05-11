@@ -60,6 +60,7 @@ class _HomeSecurityDashboardState extends State<HomeSecurityDashboard>
     'Activation': 'OFF',
     'HomeStatus': 'Home is Safe',
     'Password': '1234',
+    'Door': 'OPEN',
   };
   bool _isLoading = true;
   bool _showPassword = false;
@@ -386,6 +387,61 @@ class _HomeSecurityDashboardState extends State<HomeSecurityDashboard>
     );
   }
 
+  // New method to handle door state update
+  void _handleDoorStateUpdate(String newState) {
+    setState(() {
+      _values['Door'] = newState;
+    });
+  }
+
+  // New method to toggle door
+  Future<void> _toggleDoor() async {
+    final success = await _dbService.toggleDoor();
+
+    if (mounted) {
+      if (success) {
+        _refreshValues();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to toggle the door.')),
+        );
+      }
+    }
+  }
+
+  // New widget for door control button
+  Widget _buildDoorControl() {
+    final doorState = _values['Door']?.toString().toUpperCase() ?? 'CLOSED';
+    String buttonText = doorState == 'OPEN' ? 'Close Door' : 'Open Door';
+    IconData icon = doorState == 'OPEN' ? Icons.lock_open : Icons.lock;
+    Color backgroundColor =
+        doorState == 'OPEN' ? Colors.red.shade300 : Colors.green.shade300;
+    Color foregroundColor =
+        doorState == 'OPEN' ? Colors.red.shade800 : Colors.green.shade800;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      margin: const EdgeInsets.symmetric(vertical: 20),
+      child: ElevatedButton.icon(
+        icon: Icon(icon, size: 34),
+        label: Text(buttonText, style: const TextStyle(fontSize: 20)),
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 30),
+          backgroundColor: backgroundColor,
+          foregroundColor: foregroundColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+            side: BorderSide(
+              color: doorState == 'OPEN' ? Colors.red : Colors.green,
+              width: 2,
+            ),
+          ),
+        ),
+        onPressed: _toggleDoor,
+      ),
+    );
+  }
+
   // Modify build method to include stop button
   @override
   Widget build(BuildContext context) {
@@ -410,6 +466,7 @@ class _HomeSecurityDashboardState extends State<HomeSecurityDashboard>
                     _buildAlarmControl(),
                     if (_isAlarmActive) _buildStopAlarmButton(),
                     _buildPasswordSection(),
+                    _buildDoorControl(),
                   ],
                 ),
               ),
